@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aisend Enterprise Voice AI</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="/Aisend_Logo_Dark.png" alt="Aisend Logo" class="logo-dark" />
+      <img src="/Aisend_Logo_Light.png" alt="Aisend Logo" class="logo-light" />
+      <div>
+        <div class="header-title">Aisend Enterprise Showcase</div>
+        <div class="header-sub">Human-Level South African Voice AI</div>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="phone-ui">
+        <div class="phone-frame">
+          <div class="status" id="status">Enter Magic Number</div>
+          <div class="dialed" id="dialed"></div>
+          <div class="keypad" id="keypad"></div>
+          <button class="call-btn" id="callBtn">Call</button>
+          <audio id="player" class="audio-player" controls></audio>
+          <div class="log" id="log"></div>
+        </div>
+      </div>
+      <div class="visualizer-deck" id="visualizerDeck">
+        <!-- Dynamic Visual Cards will be rendered here -->
+      </div>
+    </div>
+    <div class="trust-indicators" id="trustIndicators"></div>
+  </div>
+  <script>
+    // --- Keypad Logic ---
+    const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
+    const keypad = document.getElementById('keypad');
+    const dialedEl = document.getElementById('dialed');
+    const statusEl = document.getElementById('status');
+    const callBtn = document.getElementById('callBtn');
+    const player = document.getElementById('player');
+    const logEl = document.getElementById('log');
+    const visualizerDeck = document.getElementById('visualizerDeck');
+    const trustIndicators = document.getElementById('trustIndicators');
+    let dialed = '', calling = false, scenario = null;
+
+    KEYS.forEach(k => {
+      const btn = document.createElement('div');
+      btn.className = 'key';
+      btn.textContent = k;
+      btn.onclick = () => {
+        if (calling) return;
+        if (dialed.length < 6) {
+          dialed += k;
+          dialedEl.textContent = dialed;
+        }
+      };
+      keypad.appendChild(btn);
+    });
+
+    function resetCallUI() {
+      calling = false;
+      scenario = null;
+      dialed = '';
+      dialedEl.textContent = '';
+      statusEl.textContent = 'Enter Magic Number';
+      callBtn.textContent = 'Call';
+      player.style.display = 'none';
+      player.pause(); player.src = '';
+      visualizerDeck.innerHTML = '';
+      trustIndicators.innerHTML = '';
+    }
+
+    function appendLog(who, text) {
+      const d = document.createElement('div');
+      d.innerHTML = `<strong>${who}:</strong> ${text || ''}`;
+      logEl.appendChild(d);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // --- Magic Number Mapping ---
+    function getScenario(num) {
+      if (num === '101') return '101';
+      if (num === '102') return '102';
+      if (num === '103') return '103';
+      if (num === '104') return '104';
+      if (num === '105') return '105';
+      return null;
+    }
+
+    // --- Call Logic ---
+    callBtn.onclick = async () => {
+      if (calling) { resetCallUI(); return; }
+      scenario = getScenario(dialed);
+      if (!scenario) {
+        statusEl.textContent = 'Invalid Magic Number';
+        dialedEl.textContent = '';
+        return;
+      }
+      calling = true;
+      statusEl.textContent = 'Dialling...';
+      callBtn.textContent = 'End';
+      setTimeout(async () => {
+        statusEl.textContent = 'Talking to AI...';
+        appendLog('System', `Scenario: ${scenario}`);
+        // Send to backend
+        try {
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ scenario_id: scenario })
+          });
+          const j = await res.json();
+          const aiText = j.text || 'Sorry, I could not process that.';
+          appendLog('Aisend', aiText);
+          if (j.audio) {
+            const bin = Uint8Array.from(atob(j.audio), c => c.charCodeAt(0));
+            const blob = new Blob([bin.buffer], { type: 'audio/mpeg' });
+            const url = URL.createObjectURL(blob);
+            player.src = url;
+            player.style.display = 'block';
+            await player.play().catch(() => { });
+          } else {
+            player.style.display = 'none';
+            // fallback: browser TTS
+            if ('speechSynthesis' in window) {
+              const utter = new SpeechSynthesisUtterance(aiText);
+              utter.lang = 'en-ZA';
+              window.speechSynthesis.speak(utter);
+            }
+          }
+          statusEl.textContent = 'Call Complete';
+          updateVisuals(j.metadata || {}, scenario);
+        } catch (e) {
+          appendLog('Error', 'Network error — fallback to text.');
+          statusEl.textContent = 'Error';
+        }
+      }, 1200); // Simulate ringback delay
+    };
+
+    // --- Visualizer Deck Logic ---
+    function updateVisuals(metadata, scenario) {
+      visualizerDeck.innerHTML = '';
+      trustIndicators.innerHTML = '';
+      // Trust Badges
+      if (scenario === '102') trustIndicators.innerHTML = '<span class="badge">HPCSA Registered</span>';
+      if (scenario === '103') trustIndicators.innerHTML = '<span class="badge">EAAB Certified</span>';
+      if (scenario === '104') trustIndicators.innerHTML = '<span class="badge">SACAA Compliant</span>';
+      if (scenario === '105') trustIndicators.innerHTML = '<span class="badge">SAPVIA Member</span>';
+      // Visual Cards
+      if (metadata.type === 'payment') {
+        visualizerDeck.innerHTML = `<div class="card payment-modal">Ozow Payment Modal (Simulated)</div>`;
+      } else if (metadata.type === 'menu') {
+        visualizerDeck.innerHTML = `<div class="card menu-card">Menu Card (Sample Menu)</div>`;
+      } else if (metadata.type === 'medical') {
+        visualizerDeck.innerHTML = `<div class="card medical-aid">Medical Aid Validated <span class="tick">✔</span></div>
+        <div class="card calendar">Appointment Slots (Calendar View)</div>`;
+      } else if (metadata.type === 'property') {
+        visualizerDeck.innerHTML = `<div class="card property-brochure">Property Brochure (Sandton Home)</div>
+        <div class="card bond-calc">Bond Calculator Result</div>`;
+      } else if (metadata.type === 'map') {
+        visualizerDeck.innerHTML = `<div class="card map-widget">Live Map Tracking (Driver: ${metadata.driver || 'N/A'}, Plate: ${metadata.plate || 'N/A'})</div>
+        <div class="card driver-profile">Driver Profile</div>`;
+      } else if (metadata.type === 'graph') {
+        visualizerDeck.innerHTML = `<div class="card solar-graph">Solar Savings Graph (You save R${metadata.savings || '0'}/month)</div>
+        <div class="card quote-summary">Quote Summary</div>`;
+      } else {
+        visualizerDeck.innerHTML = `<div class="card info-card">No visual data available.</div>`;
+      }
+    }
+
+    // Reset UI on load
+    resetCallUI();
+  </script>
+</body>
+
+</html>
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aisend Voice AI Demo</title>
+  <link rel="icon" href="/Aisend_Logo_Dark.png" />
+  <style>
+    :root {
+      --bg: #0a0f1a;
+      --card: #181f2f;
+      --accent: #10ffb0;
+      --accent2: #00ffe7;
+      --muted: #a0aec0;
+      --glass: rgba(255, 255, 255, 0.04);
+      --neon: 0 0 12px #10ffb0, 0 0 24px #00ffe7;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Inter', system-ui, Segoe UI, Roboto, -apple-system;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0a0f1a 60%, #1a0a1f 100%);
+      color: #e6eef8;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 48px auto;
+      padding: 32px 18px;
+      background: var(--glass);
+      border-radius: 18px;
+      box-shadow: 0 8px 40px #000a;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .header img {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      box-shadow: var(--neon);
+      background: #fff;
+    }
+
+    .header-title {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: var(--accent);
+      text-shadow: var(--neon);
+    }
+
+    .header-sub {
+      color: var(--muted);
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    .logo-dark {
+      display: block;
+    }
+
+    .logo-light {
+      display: none;
+    }
+
+    @media (prefers-color-scheme: light) {
+      .logo-dark {
+        display: none;
+      }
+
+      .logo-light {
+        display: block;
+      }
+    }
+
+    .phone-frame {
+      width: 260px;
+      height: 480px;
+      background: #101828;
+      border-radius: 32px;
+      box-shadow: var(--neon);
+      border: 4px solid var(--accent2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      position: relative;
+      margin: 0 auto 18px;
+    }
+
+    .status {
+      color: var(--accent);
+      font-weight: 700;
+      margin: 18px 0 8px;
+      text-align: center;
+    }
+
+    .ringback {
+      color: var(--muted);
+      font-size: 1.1rem;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 60px);
+      gap: 14px;
+      justify-content: center;
+      margin: 18px 0;
+    }
+
+    .key {
+      background: var(--card);
+      color: var(--accent);
+      font-size: 2rem;
+      font-weight: 700;
+      border: 2px solid var(--accent2);
+      border-radius: 16px;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 12px #0006;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .key:active {
+      background: var(--accent2);
+      color: #fff;
+    }
+
+    .dialed {
+      font-size: 1.5rem;
+      color: var(--accent2);
+      text-align: center;
+      margin: 10px 0 0;
+      letter-spacing: 2px;
+    }
+
+    .call-btn {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      color: #181f2f;
+      border: none;
+      border-radius: 20px;
+      width: 100%;
+      font-size: 1.2rem;
+      font-weight: 900;
+      box-shadow: var(--neon);
+      margin: 18px 0;
+      padding: 14px 0;
+      cursor: pointer;
+    }
+
+    .call-btn:active {
+      box-shadow: 0 0 0 #0000;
+    }
+
+    .log {
+      background: var(--glass);
+      border-radius: 10px;
+      padding: 10px;
+      min-height: 60px;
+      max-height: 120px;
+      overflow-y: auto;
+      font-size: 1rem;
+      width: 90%;
+      margin: 0 auto 10px;
+    }
+
+    .audio-player {
+      width: 100%;
+      margin: 10px 0;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="/Aisend_Logo_Dark.png" alt="Aisend Logo" class="logo-dark" />
+      <img src="/Aisend_Logo_Light.png" alt="Aisend Logo" class="logo-light" />
+      <div>
+        <div class="header-title">Aisend</div>
+        <div class="header-sub">Digital Twin Voice Demo</div>
+      </div>
+    </div>
+    <div class="phone-frame">
+      <div class="status" id="status">Enter Magic Number</div>
+      <div class="ringback" id="ringback"></div>
+      <div class="dialed" id="dialed"></div>
+      <div class="keypad" id="keypad"></div>
+      <button class="call-btn" id="callBtn">Call</button>
+      <audio id="player" class="audio-player" controls></audio>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+  <script>
+    // --- Keypad Logic ---
+    const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
+    const keypad = document.getElementById('keypad');
+    const dialedEl = document.getElementById('dialed');
+    const statusEl = document.getElementById('status');
+    const ringbackEl = document.getElementById('ringback');
+    const callBtn = document.getElementById('callBtn');
+    const player = document.getElementById('player');
+    const logEl = document.getElementById('log');
+    let dialed = '', calling = false, scenario = null;
+
+    KEYS.forEach(k => {
+      const btn = document.createElement('div');
+      btn.className = 'key';
+      btn.textContent = k;
+      btn.onclick = () => {
+        if (calling) return;
+        if (dialed.length < 6) {
+          dialed += k;
+          dialedEl.textContent = dialed;
+        }
+      };
+      keypad.appendChild(btn);
+    });
+
+    function resetCallUI() {
+      calling = false;
+      scenario = null;
+      dialed = '';
+      dialedEl.textContent = '';
+      statusEl.textContent = 'Enter Magic Number';
+      ringbackEl.textContent = '';
+      callBtn.textContent = 'Call';
+      player.style.display = 'none';
+      player.pause(); player.src = '';
+    }
+
+    function appendLog(who, text) {
+      const d = document.createElement('div');
+      d.innerHTML = `<strong>${who}:</strong> ${text || ''}`;
+      logEl.appendChild(d);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // --- Magic Number Mapping ---
+    function getScenario(num) {
+      if (num === '101') return 'restaurant';
+      if (num === '102') return 'medical';
+      if (num === '103') return 'hotel';
+      return null;
+    }
+
+    // --- Ringback Tone (Simulated) ---
+    function playRingback() {
+      ringbackEl.textContent = 'Connecting to Aisend Network...';
+      // Simulate a South African ringback (short beep, pause, beep)
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = 425;
+      o.connect(g); g.connect(ctx.destination);
+      g.gain.value = 0.2;
+      o.start();
+      setTimeout(() => { g.gain.value = 0; }, 400);
+      setTimeout(() => { g.gain.value = 0.2; }, 1200);
+      setTimeout(() => { g.gain.value = 0; o.stop(); ctx.close(); }, 1600);
+    }
+
+    // --- Call Logic ---
+    callBtn.onclick = async () => {
+      if (calling) { resetCallUI(); return; }
+      scenario = getScenario(dialed);
+      if (!scenario) {
+        statusEl.textContent = 'Invalid Magic Number';
+        dialedEl.textContent = '';
+        return;
+      }
+      calling = true;
+      statusEl.textContent = 'Dialling...';
+      callBtn.textContent = 'End';
+      playRingback();
+      setTimeout(async () => {
+        statusEl.textContent = 'Talking to AI...';
+        ringbackEl.textContent = '';
+        appendLog('System', `Scenario: ${scenario}`);
+        // Send to backend
+        try {
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ scenario })
+          });
+          const j = await res.json();
+          const aiText = j.text || 'Sorry, I could not process that.';
+          appendLog('Aisend', aiText);
+          if (j.audio) {
+            const bin = Uint8Array.from(atob(j.audio), c => c.charCodeAt(0));
+            const blob = new Blob([bin.buffer], { type: 'audio/mpeg' });
+            const url = URL.createObjectURL(blob);
+            player.src = url;
+            player.style.display = 'block';
+            await player.play().catch(() => { });
+          } else {
+            player.style.display = 'none';
+            // fallback: browser TTS
+            if ('speechSynthesis' in window) {
+              const utter = new SpeechSynthesisUtterance(aiText);
+              utter.lang = 'en-ZA';
+              window.speechSynthesis.speak(utter);
+            }
+          }
+          statusEl.textContent = 'Call Complete';
+        } catch (e) {
+          appendLog('Error', 'Network error — fallback to text.');
+          statusEl.textContent = 'Error';
+        }
+      }, 1800); // Simulate ringback delay
+    };
+
+    // Reset UI on load
+    resetCallUI();
+  </script>
+</body>
+
+</html>

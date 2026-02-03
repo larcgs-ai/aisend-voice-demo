@@ -1,0 +1,270 @@
+:root {
+    --bg: #0a0f1a;
+    --card: #181f2f;
+    --accent: #10ffb0;
+    --accent2: #00ffe7;
+    --muted: #a0aec0;
+    --glass: rgba(255, 255, 255, 0.04);
+    --neon: 0 0 12px #10ffb0, 0 0 24px #00ffe7;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Inter', system-ui, Segoe UI, Roboto, -apple-system;
+}
+
+body {
+    background: linear-gradient(135deg, #0a0f1a 60%, #1a0a1f 100%);
+    color: #e6eef8;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 48px auto;
+    padding: 32px 18px;
+    background: var(--glass);
+    border-radius: 18px;
+    box-shadow: 0 8px 40px #000a;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.header img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    box-shadow: var(--neon);
+    background: #fff;
+}
+
+.header-title {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: var(--accent);
+    text-shadow: var(--neon);
+}
+
+.header-sub {
+    color: var(--muted);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.logo-dark {
+    display: block;
+}
+
+.logo-light {
+    display: none;
+}
+
+@media (prefers-color-scheme: light) {
+    .logo-dark {
+        display: none;
+    }
+
+    .logo-light {
+        display: block;
+    }
+}
+
+.main-content {
+    display: flex;
+    gap: 32px;
+}
+
+.phone-ui {
+    flex: 1.2;
+}
+
+.phone-frame {
+    width: 260px;
+    height: 480px;
+    background: #101828;
+    border-radius: 32px;
+    box-shadow: var(--neon);
+    border: 4px solid var(--accent2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    margin: 0 auto 18px;
+}
+
+.status {
+    color: var(--accent);
+    font-weight: 700;
+    margin: 18px 0 8px;
+    text-align: center;
+}
+
+.dialed {
+    font-size: 1.5rem;
+    color: var(--accent2);
+    text-align: center;
+    margin: 10px 0 0;
+    letter-spacing: 2px;
+}
+
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 60px);
+    gap: 14px;
+    justify-content: center;
+    margin: 18px 0;
+}
+
+.key {
+    background: var(--card);
+    color: var(--accent);
+    font-size: 2rem;
+    font-weight: 700;
+    border: 2px solid var(--accent2);
+    border-radius: 16px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 12px #0006;
+    transition: background 0.2s, color 0.2s;
+}
+
+.key:active {
+    background: var(--accent2);
+    color: #fff;
+}
+
+.call-btn {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #181f2f;
+    border: none;
+    border-radius: 20px;
+    width: 100%;
+    font-size: 1.2rem;
+    font-weight: 900;
+    box-shadow: var(--neon);
+    margin: 18px 0;
+    padding: 14px 0;
+    cursor: pointer;
+}
+
+.call-btn:active {
+    box-shadow: 0 0 0 #0000;
+}
+
+.log {
+    background: var(--glass);
+    border-radius: 10px;
+    padding: 10px;
+    min-height: 60px;
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 1rem;
+    width: 90%;
+    margin: 0 auto 10px;
+}
+
+.audio-player {
+    width: 100%;
+    margin: 10px 0;
+    display: none;
+}
+
+.visualizer-deck {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    align-items: flex-start;
+}
+
+.card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 2px 12px #0006;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.payment-modal {
+    border: 2px solid #00ffe7;
+}
+
+.menu-card {
+    border: 2px solid #10ffb0;
+}
+
+.medical-aid {
+    border: 2px solid #4ade80;
+}
+
+.calendar {
+    border: 2px solid #facc15;
+}
+
+.property-brochure {
+    border: 2px solid #818cf8;
+}
+
+.bond-calc {
+    border: 2px solid #f472b6;
+}
+
+.map-widget {
+    border: 2px solid #38bdf8;
+}
+
+.driver-profile {
+    border: 2px solid #f87171;
+}
+
+.solar-graph {
+    border: 2px solid #fbbf24;
+}
+
+.quote-summary {
+    border: 2px solid #34d399;
+}
+
+.info-card {
+    border: 2px solid #64748b;
+}
+
+.badge {
+    display: inline-block;
+    background: var(--accent2);
+    color: #181f2f;
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-weight: 700;
+    margin: 0 8px 8px 0;
+}
+
+@media (max-width: 1100px) {
+    .main-content {
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .visualizer-deck {
+        grid-template-columns: 1fr;
+    }
+}
