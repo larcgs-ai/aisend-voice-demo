@@ -1,0 +1,9 @@
+# Example environment variables for local development
+# Copy this file to .dev.vars and fill in your actual API keys
+# .dev.vars is gitignored and should never be committed
+
+# Get your Groq API key from https://console.groq.com/
+GROQ_API_KEY=your_groq_api_key_here
+
+# Get your Deepgram API key from https://console.deepgram.com/
+DEEPGRAM_API_KEY=your_deepgram_api_key_here
